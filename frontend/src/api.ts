@@ -98,10 +98,11 @@ export async function detectDraftFolder(): Promise<DraftFolderInfo> {
 export async function makeDraft(
   id: string,
   draftFolder: string,
+  name?: string,
 ): Promise<string> {
   const { data } = await http.post<{ draft_path: string }>(
     `/projects/${id}/draft`,
-    { draft_folder: draftFolder },
+    { draft_folder: draftFolder, name: name?.trim() || null },
   );
   return data.draft_path;
 }

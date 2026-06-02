@@ -29,6 +29,7 @@ class PreviewRequest(BaseModel):
 
 class DraftRequest(BaseModel):
     draft_folder: str
+    name: str | None = None   # 저장(드래프트) 이름. 비우면 프로젝트명 사용
 
 
 @router.get("/{project_id}/segments")
@@ -70,7 +71,7 @@ async def make_draft(project_id: str, req: DraftRequest) -> dict:
     if project is None:
         raise HTTPException(404, "project not found")
     try:
-        draft_path = build_draft(project, req.draft_folder)
+        draft_path = build_draft(project, req.draft_folder, req.name)
     except PermissionError:
         # 대상 드래프트가 CapCut에서 열려 있어 .locked 잠김 → 덮어쓰기 불가
         raise HTTPException(

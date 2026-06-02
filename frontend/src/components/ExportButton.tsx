@@ -4,11 +4,13 @@ import { detectDraftFolder, makeDraft } from '../api';
 
 interface Props {
   projectId: string;
+  defaultName?: string;   // 기본 저장 이름(보통 원본 파일명)
 }
 
-export default function ExportButton({ projectId }: Props) {
+export default function ExportButton({ projectId, defaultName }: Props) {
   const [draftFolder, setDraftFolder] = useState('');
   const [autoDetected, setAutoDetected] = useState(false);
+  const [draftName, setDraftName] = useState(defaultName ?? '');
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,6 +29,11 @@ export default function ExportButton({ projectId }: Props) {
       });
   }, []);
 
+  // 프로젝트가 바뀌면 기본 이름 갱신
+  useEffect(() => {
+    setDraftName(defaultName ?? '');
+  }, [defaultName]);
+
   async function exportDraft() {
     if (!draftFolder.trim()) {
       setError('CapCut 草稿 폴더 경로를 입력하세요.');
@@ -36,7 +43,7 @@ export default function ExportButton({ projectId }: Props) {
     setError(null);
     setResult(null);
     try {
-      const path = await makeDraft(projectId, draftFolder.trim());
+      const path = await makeDraft(projectId, draftFolder.trim(), draftName);
       setResult(path);
     } catch (e) {
       // 서버가 보낸 상세 메시지(detail)를 우선 표시, 없으면 일반 메시지
@@ -50,6 +57,16 @@ export default function ExportButton({ projectId }: Props) {
   return (
     <section className="panel">
       <h3>CapCut 드래프트 생성</h3>
+      <label>
+        저장 이름
+        <input
+          type="text"
+          placeholder="예: 강의1"
+          value={draftName}
+          onChange={(e) => setDraftName(e.target.value)}
+        />
+        <small> — CapCut에 이 이름으로 저장됩니다. 짧게 바꾸면 찾기 쉬워요.</small>
+      </label>
       <label>
         草稿(draft) 폴더 경로
         <input

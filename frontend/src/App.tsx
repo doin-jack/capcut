@@ -72,7 +72,7 @@ export default function App() {
           </div>
 
           <div className="col">
-            <ExportButton projectId={project.id} />
+            <ExportButton projectId={project.id} defaultName={project.name} />
           </div>
         </div>
       )}

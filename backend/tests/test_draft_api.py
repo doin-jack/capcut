@@ -22,7 +22,7 @@ def test_draft_locked_returns_409(monkeypatch):
     monkeypatch.setattr(editing.store, "load", lambda pid: _dummy_project())
     monkeypatch.setattr(editing.store, "save", lambda p: None)
 
-    def _boom(project, folder):
+    def _boom(project, folder, name=None):
         raise PermissionError("[WinError 32] .locked")
 
     monkeypatch.setattr(editing, "build_draft", _boom)
@@ -36,7 +36,7 @@ def test_draft_unknown_error_returns_500_with_detail(monkeypatch):
     monkeypatch.setattr(editing.store, "load", lambda pid: _dummy_project())
     monkeypatch.setattr(editing.store, "save", lambda p: None)
 
-    def _boom(project, folder):
+    def _boom(project, folder, name=None):
         raise RuntimeError("boom")
 
     monkeypatch.setattr(editing, "build_draft", _boom)

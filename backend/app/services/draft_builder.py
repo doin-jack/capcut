@@ -5,6 +5,7 @@ crop(정규화 x,y,w,h) → CropSettings 8꼭짓점(0~1) 변환.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pycapcut as cc
@@ -18,6 +19,16 @@ from ..models.project import Project, Segment
 VIDEO_TRACK = "main_video"
 TEXT_TRACK = "자막"
 FILTER_TRACK = "filter"
+
+# Windows/CapCut 폴더명에 못 쓰는 문자
+_ILLEGAL_NAME_CHARS = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
+
+
+def sanitize_draft_name(name: str | None) -> str:
+    """드래프트(폴더) 이름 정리: 불가 문자 제거 + 공백 정리. 비면 'untitled'."""
+    cleaned = _ILLEGAL_NAME_CHARS.sub("", (name or "").strip())
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")  # 끝의 공백/점 제거(Windows)
+    return cleaned[:80] or "untitled"
 
 
 def _us(seconds: float) -> int:
@@ -49,10 +60,12 @@ def props_to_clip_settings(props: ClipProps) -> cc.ClipSettings:
     )
 
 
-def build_draft(project: Project, draft_folder: str) -> str:
+def build_draft(project: Project, draft_folder: str, draft_name: str | None = None) -> str:
+    # draft_name 이 주어지면 그 이름으로 저장(폴더명). 없으면 프로젝트명 사용.
+    name = sanitize_draft_name(draft_name) if draft_name else sanitize_draft_name(project.name)
     folder = cc.DraftFolder(draft_folder)
     script = folder.create_draft(
-        project.name, project.width, project.height,
+        name, project.width, project.height,
         fps=project.fps, allow_replace=True,
     )
     script.add_track(cc.TrackType.video, VIDEO_TRACK)
