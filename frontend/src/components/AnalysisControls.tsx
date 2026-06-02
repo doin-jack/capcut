@@ -28,7 +28,7 @@ export default function AnalysisControls({ projectId, onDone }: Props) {
     min_freeze_ms: 500,
     remove_freeze: false,
     remove_retakes: true,
-    model_size: 'base',
+    model_size: 'medium',
     language: null,
   });
   const [running, setRunning] = useState(false);
@@ -114,9 +114,10 @@ export default function AnalysisControls({ projectId, onDone }: Props) {
         Whisper 모델
         <select value={params.model_size}
           onChange={(e) => set('model_size', e.target.value)}>
-          <option value="tiny">tiny (빠름)</option>
-          <option value="base">base</option>
-          <option value="small">small (정확)</option>
+          <option value="base">base (빠름·부정확)</option>
+          <option value="small">small</option>
+          <option value="medium">medium (권장·정확)</option>
+          <option value="large-v3">large-v3 (최정확·느림)</option>
         </select>
       </label>
 

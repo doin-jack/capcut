@@ -1,72 +1,51 @@
-"""Whisper 전사 + SRT 생성 (Design 3.3 / FR-07).
+"""faster-whisper 전사 + 한국어 의미 단위 SRT 생성 (Design 3.3 / FR-07).
 
-faster-whisper. word_timestamps=True 로 단어 단위 타임스탬프 + SRT.
-transcribe() 반환: (segments(iterable), info).
+인식 정확도 향상을 위해 core/ 파이프라인에 위임한다:
+- core.transcriber.Transcriber: 기본 medium 모델 + VAD 필터 + temperature 폴백 +
+  환각 임계값(no_speech/compression) + beam=5 + condition_on_previous_text=False 로
+  한국어 인식 정확도를 높이고 환각/누락을 줄인다.
+- core.srt_segmenter: 한국어 의미 단위(종결어미·연결어미·호흡·길이) 분할 + 환각 필터.
+- core.srt_writer: SRT(UTF-8 BOM + CRLF) 작성.
+
+반환 형태는 기존과 호환: (words, srt_path). words 는 core 의 Word(start, end, text)이며
+stutter_detector 가 `from .transcriber import Word` 로 그대로 사용한다.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
-from faster_whisper import WhisperModel
+from core.srt_segmenter import SegmenterOptions, Word, segment_words_to_subtitles
+from core.srt_writer import write_srt
+from core.transcriber import Transcriber
 
-# 모델은 비싸므로 size별 캐시
-_MODELS: dict[str, WhisperModel] = {}
+__all__ = ["Word", "transcribe"]
 
-
-@dataclass
-class Word:
-    text: str
-    start: float
-    end: float
+# 모델 로드는 비싸므로 size별로 Transcriber(모델 인스턴스 보유)를 캐시한다.
+_TRANSCRIBERS: dict[str, Transcriber] = {}
 
 
-def _get_model(model_size: str) -> WhisperModel:
-    if model_size not in _MODELS:
-        # CPU 환경 기본값 (int8). GPU 사용 시 device="cuda" 로 교체 가능.
-        _MODELS[model_size] = WhisperModel(model_size, device="cpu", compute_type="int8")
-    return _MODELS[model_size]
-
-
-def _fmt_ts(seconds: float) -> str:
-    ms = int(round(seconds * 1000))
-    h, ms = divmod(ms, 3_600_000)
-    m, ms = divmod(ms, 60_000)
-    s, ms = divmod(ms, 1000)
-    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+def _get(model_size: str) -> Transcriber:
+    if model_size not in _TRANSCRIBERS:
+        _TRANSCRIBERS[model_size] = Transcriber(
+            model_size=model_size, device="cpu", compute_type="int8",
+        )
+    return _TRANSCRIBERS[model_size]
 
 
 def transcribe(
-    audio_path: str,
+    audio_path: str | Path,
     srt_out_path: str | Path,
     *,
-    model_size: str = "base",
-    language: str | None = None,
+    model_size: str = "medium",
+    language: str | None = "ko",
 ) -> tuple[list[Word], str]:
-    """반환: (words, srt_path)."""
-    model = _get_model(model_size)
-    segments, _info = model.transcribe(
-        audio_path,
-        word_timestamps=True,
-        language=language,
-    )
+    """오디오 → (단어 리스트, SRT 경로).
 
-    words: list[Word] = []
-    srt_lines: list[str] = []
-    idx = 1
-    for seg in segments:  # generator → 순회하며 소비
-        text = (seg.text or "").strip()
-        if text:
-            srt_lines.append(str(idx))
-            srt_lines.append(f"{_fmt_ts(seg.start)} --> {_fmt_ts(seg.end)}")
-            srt_lines.append(text)
-            srt_lines.append("")
-            idx += 1
-        for w in (seg.words or []):
-            wt = (w.word or "").strip()
-            if wt:
-                words.append(Word(text=wt, start=w.start, end=w.end))
-
+    단어 타임스탬프는 stutter/retake 감지에, SRT 는 자막 트랙에 쓰인다.
+    SRT 는 core 의 한국어 의미 단위 분할로 작성된다.
+    """
+    result = _get(model_size).transcribe(Path(audio_path), language=language)
+    subs = segment_words_to_subtitles(result.words, SegmenterOptions())
     srt_path = Path(srt_out_path)
-    srt_path.write_text("\n".join(srt_lines), encoding="utf-8")
-    return words, str(srt_path)
+    write_srt(subs, srt_path)
+    return result.words, str(srt_path)

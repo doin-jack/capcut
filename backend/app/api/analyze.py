@@ -20,7 +20,7 @@ class AnalyzeRequest(BaseModel):
     min_freeze_ms: int = 500
     remove_freeze: bool = False   # 멈춤 제거 기본 OFF (정적 콘텐츠 과다 컷 방지)
     remove_retakes: bool = True   # 반복 테이크/말더듬 제거 기본 ON
-    model_size: str = "base"
+    model_size: str = "medium"    # 한국어 정확도↑
     language: str | None = None
 
 

@@ -35,7 +35,7 @@ class AnalyzeParams:
     remove_freeze: bool = False
     # 반복 테이크/말 더듬(같은 말 여러 번 다시 함) 자동 제거. 기본 ON.
     remove_retakes: bool = True
-    model_size: str = "base"
+    model_size: str = "medium"   # 한국어 정확도↑ (base 는 오인식 많음)
     language: str | None = None
 
 

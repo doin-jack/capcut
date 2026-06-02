@@ -17,7 +17,7 @@ router = APIRouter(prefix="/projects", tags=["subtitle"])
 
 
 class SubtitleRequest(BaseModel):
-    model_size: str = "base"
+    model_size: str = "medium"
     lang: str | None = None
 
 
