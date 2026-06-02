@@ -69,7 +69,19 @@ async def make_draft(project_id: str, req: DraftRequest) -> dict:
     project = store.load(project_id)
     if project is None:
         raise HTTPException(404, "project not found")
-    draft_path = build_draft(project, req.draft_folder)
+    try:
+        draft_path = build_draft(project, req.draft_folder)
+    except PermissionError:
+        # 대상 드래프트가 CapCut에서 열려 있어 .locked 잠김 → 덮어쓰기 불가
+        raise HTTPException(
+            409,
+            "CapCut에서 같은 이름의 프로젝트가 열려 있어 덮어쓸 수 없습니다. "
+            "CapCut에서 해당 프로젝트를 닫은 뒤 다시 시도하세요.",
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # 그 외 오류도 CORS 포함 응답으로 명확히 전달
+        raise HTTPException(500, f"드래프트 생성 중 오류: {exc}")
     project.capcut_draft_path = draft_path
     store.save(project)
     return {"draft_path": draft_path}

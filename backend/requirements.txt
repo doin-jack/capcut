@@ -4,6 +4,8 @@ python-multipart
 pydantic
 faster-whisper
 pydub
+audioop-lts; python_version >= "3.13"  # stdlib audioop removed in 3.13; required by pydub
+opencv-python  # cv2, used by services/freeze_detector.py
 scikit-image
 pillow
 pymediainfo

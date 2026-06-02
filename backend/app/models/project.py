@@ -34,6 +34,7 @@ class DetectedRegions(BaseModel):
     silence: list[Region] = Field(default_factory=list)
     freeze: list[Region] = Field(default_factory=list)
     stutter: list[Region] = Field(default_factory=list)
+    retake: list[Region] = Field(default_factory=list)   # 반복 테이크(false start)
 
 
 class Project(BaseModel):

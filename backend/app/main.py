@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import analyze, editing, projects, subtitle
+from .api import analyze, capcut, editing, projects, subtitle
 
 app = FastAPI(title="CapCut Auto Editor", version="0.1.0")
 
@@ -21,6 +21,7 @@ app.include_router(projects.router)
 app.include_router(analyze.router)
 app.include_router(subtitle.router)
 app.include_router(editing.router)
+app.include_router(capcut.router)
 
 
 @app.get("/health")

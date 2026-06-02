@@ -55,8 +55,11 @@ export interface Project {
 export interface AnalyzeParams {
   min_silence_ms: number;
   silence_thresh_db: number;
+  keep_padding_ms: number;   // 무음 양끝 여유(숨 쉬는 간격)
   ssim_thresh: number;
   min_freeze_ms: number;
+  remove_freeze: boolean;   // 멈춤 제거 (기본 off)
+  remove_retakes: boolean;  // 반복 테이크/말더듬 제거 (기본 on)
   model_size: string;
   language: string | null;
 }

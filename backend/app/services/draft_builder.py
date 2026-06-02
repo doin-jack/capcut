@@ -5,9 +5,12 @@ crop(정규화 x,y,w,h) → CropSettings 8꼭짓점(0~1) 변환.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import pycapcut as cc
 from pycapcut import trange
 
+from . import subtitle_remap
 from ..metadata import filter_meta
 from ..models.clip_props import ClipProps, CropBox
 from ..models.project import Project, Segment
@@ -64,6 +67,8 @@ def build_draft(project: Project, draft_folder: str) -> str:
         script.add_track(cc.TrackType.filter, FILTER_TRACK)
 
     track_pos = 0.0  # 트랙상 누적 위치 (초)
+    # 자막 재매핑용 (원본 시작, 원본 끝, 컷 타임라인상 새 시작) — 비디오와 동일 오프셋
+    timeline_map: list[tuple[float, float, float]] = []
     for seg in project.segments:
         if not seg.enabled:
             continue
@@ -100,15 +105,23 @@ def build_draft(project: Project, draft_folder: str) -> str:
                 intensity=props.filter_intensity,
             )
 
+        timeline_map.append((seg.src_start, seg.src_end, track_pos))
         track_pos += dur
 
-    # 자막
+    # 자막: 원본 SRT 를 컷 타임라인으로 재매핑한 뒤 import (단일 time_offset 으로는
+    # 구간별 제거량 차이를 표현할 수 없으므로 새 SRT 를 생성한다)
     if project.subtitle_srt_path:
-        script.import_srt(
+        remapped = subtitle_remap.remap_srt_file(
             project.subtitle_srt_path,
-            TEXT_TRACK,
-            text_style=cc.TextStyle(size=5, align=1),
+            timeline_map,
+            str(Path(project.subtitle_srt_path).with_name("subtitle_cut.srt")),
         )
+        if remapped:
+            script.import_srt(
+                remapped,
+                TEXT_TRACK,
+                text_style=cc.TextStyle(size=5, align=1),
+            )
 
     script.save()
     return script.save_path

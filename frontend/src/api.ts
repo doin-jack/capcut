@@ -83,6 +83,18 @@ export async function preview(
   return URL.createObjectURL(data);
 }
 
+export interface DraftFolderInfo {
+  path: string | null;   // 탐지된(또는 힌트) 경로
+  exists: boolean;       // 실제 폴더 존재 여부
+  candidates: string[];
+}
+
+/** OS별 표준 위치에서 CapCut 草稿 폴더를 자동 탐지. */
+export async function detectDraftFolder(): Promise<DraftFolderInfo> {
+  const { data } = await http.get<DraftFolderInfo>('/capcut/draft-folder');
+  return data;
+}
+
 export async function makeDraft(
   id: string,
   draftFolder: string,

@@ -15,8 +15,11 @@ router = APIRouter(prefix="/projects", tags=["analyze"])
 class AnalyzeRequest(BaseModel):
     min_silence_ms: int = 700
     silence_thresh_db: float = -40.0
+    keep_padding_ms: int = 200   # 무음 양끝 여유(숨 쉬는 간격). 클수록 덜 급함
     ssim_thresh: float = 0.985
     min_freeze_ms: int = 500
+    remove_freeze: bool = False   # 멈춤 제거 기본 OFF (정적 콘텐츠 과다 컷 방지)
+    remove_retakes: bool = True   # 반복 테이크/말더듬 제거 기본 ON
     model_size: str = "base"
     language: str | None = None
 

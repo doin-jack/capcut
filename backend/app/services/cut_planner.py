@@ -29,11 +29,12 @@ def plan_keep_segments(
     silence: list[Region],
     freeze: list[Region],
     stutter: list[Region],
+    retake: list[Region] | None = None,
     *,
     min_keep_s: float = 0.05,
     merge_gap_s: float = 0.12,
 ) -> list[Segment]:
-    removal = _merge(silence + freeze + stutter)
+    removal = _merge(silence + freeze + stutter + (retake or []))
 
     # 여집합(keep) 계산
     keeps: list[tuple[float, float]] = []

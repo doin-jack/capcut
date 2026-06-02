@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import './App.css';
-import { getProject, listSegments, patchSegment } from './api';
+import { getProject, listSegments } from './api';
 import AnalysisControls from './components/AnalysisControls';
 import ClipList from './components/ClipList';
 import ExportButton from './components/ExportButton';
 import PreviewCanvas from './components/PreviewCanvas';
-import PropertyPanel from './components/PropertyPanel';
 import VideoUploader from './components/VideoUploader';
 import { defaultClipProps } from './types';
 import type { ClipProps, Project, Segment } from './types';
@@ -15,7 +14,6 @@ export default function App() {
   const [segments, setSegments] = useState<Segment[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftProps, setDraftProps] = useState<ClipProps>(defaultClipProps());
-  const [savingProps, setSavingProps] = useState(false);
 
   const selected = segments.find((s) => s.id === selectedId) ?? null;
 
@@ -36,19 +34,6 @@ export default function App() {
     const updated = await getProject(project.id);
     setProject(updated);
     await refreshSegments(project.id);
-  }
-
-  async function saveProps() {
-    if (!project || !selected) return;
-    setSavingProps(true);
-    try {
-      const updated = await patchSegment(project.id, selected.id, {
-        props: draftProps,
-      });
-      setSegments(segments.map((s) => (s.id === updated.id ? updated : s)));
-    } finally {
-      setSavingProps(false);
-    }
   }
 
   return (
@@ -84,14 +69,6 @@ export default function App() {
               segment={selected}
               props={draftProps}
             />
-            {selected && (
-              <PropertyPanel
-                props={draftProps}
-                onChange={setDraftProps}
-                onSave={saveProps}
-                saving={savingProps}
-              />
-            )}
           </div>
 
           <div className="col">

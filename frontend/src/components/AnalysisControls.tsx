@@ -23,8 +23,11 @@ export default function AnalysisControls({ projectId, onDone }: Props) {
   const [params, setParams] = useState<AnalyzeParams>({
     min_silence_ms: 700,
     silence_thresh_db: -40,
+    keep_padding_ms: 200,
     ssim_thresh: 0.985,
     min_freeze_ms: 500,
+    remove_freeze: false,
+    remove_retakes: true,
     model_size: 'base',
     language: null,
   });
@@ -71,17 +74,42 @@ export default function AnalysisControls({ projectId, onDone }: Props) {
           onChange={(e) => set('silence_thresh_db', +e.target.value)} />
       </label>
       <label>
-        멈춤 SSIM 임계값: {params.ssim_thresh}
-        <input type="range" min={0.9} max={0.999} step={0.001}
-          value={params.ssim_thresh}
-          onChange={(e) => set('ssim_thresh', +e.target.value)} />
+        컷 사이 여유(숨 쉬는 간격): {params.keep_padding_ms} ms
+        <input type="range" min={0} max={500} step={25}
+          value={params.keep_padding_ms}
+          onChange={(e) => set('keep_padding_ms', +e.target.value)} />
+        <small> — 클수록 컷이 덜 급하고 말이 자연스러움</small>
       </label>
-      <label>
-        최소 멈춤 길이: {params.min_freeze_ms} ms
-        <input type="range" min={200} max={2000} step={50}
-          value={params.min_freeze_ms}
-          onChange={(e) => set('min_freeze_ms', +e.target.value)} />
+      <label className="checkbox">
+        <input type="checkbox"
+          checked={params.remove_retakes}
+          onChange={(e) => set('remove_retakes', e.target.checked)} />
+        반복 테이크·말더듬 제거
+        <small> — 같은 말을 여러 번 다시 한 경우 마지막 완성본만 남김</small>
       </label>
+      <label className="checkbox">
+        <input type="checkbox"
+          checked={params.remove_freeze}
+          onChange={(e) => set('remove_freeze', e.target.checked)} />
+        멈춤(정지 화면) 제거
+        <small> — 강의·화면녹화 등 정적 영상에선 과도하게 잘릴 수 있어 기본 꺼짐</small>
+      </label>
+      {params.remove_freeze && (
+        <>
+          <label>
+            멈춤 SSIM 임계값: {params.ssim_thresh}
+            <input type="range" min={0.9} max={0.999} step={0.001}
+              value={params.ssim_thresh}
+              onChange={(e) => set('ssim_thresh', +e.target.value)} />
+          </label>
+          <label>
+            최소 멈춤 길이: {params.min_freeze_ms} ms
+            <input type="range" min={200} max={2000} step={50}
+              value={params.min_freeze_ms}
+              onChange={(e) => set('min_freeze_ms', +e.target.value)} />
+          </label>
+        </>
+      )}
       <label>
         Whisper 모델
         <select value={params.model_size}
