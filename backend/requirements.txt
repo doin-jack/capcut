@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+faster-whisper
+pydub
+scikit-image
+pillow
+pymediainfo
+pycapcut
+pytest
+httpx

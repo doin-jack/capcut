@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+dist/
+
+# Uploads & build artifacts (런타임 산출물 — 커밋 제외)
+backend/store/
+
+# Whisper / model caches
+*.bin
+*.pt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# bkit / local state
+.bkit-memory.json
+.bkit/
